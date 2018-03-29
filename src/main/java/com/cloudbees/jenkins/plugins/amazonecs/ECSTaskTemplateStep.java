@@ -44,7 +44,8 @@ public class ECSTaskTemplateStep extends Builder implements SimpleBuildStep {
         @Nullable List<ECSTaskTemplate.EnvironmentEntry> environments,
         @Nullable List<ECSTaskTemplate.ExtraHostEntry> extraHosts,
         @Nullable List<ECSTaskTemplate.MountPointEntry> mountPoints) {
-           this.template = new ECSTaskTemplate(
+            this.cloudName = cloudName;
+            this.template = new ECSTaskTemplate(
                 templateName,
                 label,
                 image,
@@ -165,16 +166,20 @@ public class ECSTaskTemplateStep extends Builder implements SimpleBuildStep {
         if (templates.isEmpty()) {
             templates.add(template);
         } else {
+            boolean templateExists = false;
             for (ECSTaskTemplate t : templates) {
-                if(t.getLabel() == getLabel()) {
-                    return;
+                if(t.getLabel().equals(getLabel())) {
+                    logger.println("ECS template: " + getLabel() + " already exists, skipping step");
+                    templateExists = true;
                 }
             }
-            templates.add(template);
+            if (!templateExists) {
+                logger.println("Created new ECS template: " + getLabel());
+                templates.add(template);
+                logger.println("Saving Jenkins");
+                Jenkins.getInstance().save();
+            }
         }
-        logger.println("Created new ECS template: " + getLabel());
-        logger.println("Saving Jenkins");
-        Jenkins.getInstance().save();
     }
 
     @Symbol("ecsTaskTemplate")
